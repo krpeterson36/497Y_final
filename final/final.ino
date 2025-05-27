@@ -23,13 +23,14 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-UltraSonicDistanceSensor distanceSensor(6, 12);  // Initialize sensor that uses digital (trig, echo)
+UltraSonicDistanceSensor distanceSensor(12, 6);  // Initialize sensor that uses digital (trig, echo)
 
 int lightSensorPin = 10;
 int sensorValue;
 int sensorMin = INT_MAX;
 int sensorMax = INT_MIN;
 float distance = 0;
+char* idleText = "No reading available\n";
 
 void setup() {
   // put your setup code here, to run once:
@@ -70,33 +71,53 @@ void setup() {
 void loop() {
   // Check to see if fist is closed
   while (analogRead(lightSensorPin) < ((sensorMax - sensorMin)/2)){
-    distance = distanceSensor.measureDistanceCm();
     drawDistance();
   }
-  display.clearDisplay();
+  drawIdle();
 }
-
 
 // Display distance
 void drawDistance() {
   display.clearDisplay();
-
-  display.setTextSize(1);      // Normal 1:1 pixel scale
+  display.setTextSize(2);      // 3:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);     // Start at top-left corner
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
   // Actually display the distance
-  char str[20];
-  snprintf(str, 20, "%f", distance);
+  distance = distanceSensor.measureDistanceCm();
+  char str[30];
+  dtostrf(distanceSensor.measureDistanceCm(), 3, 2, str);
+  Serial.println(distance);
+  Serial.println(str);
   int i = 0;
-  while (str[i] != '\n') {
+  while (str[i] != '\0') {
     display.write(str[i]);
     i++;
   }
   display.write(' ');
+  display.write(99);
   display.write(109);
-  display.write(109);
+
+  display.display();
+  delay(500);
+}
+
+// Display Idle
+void drawIdle() {
+  display.clearDisplay();
+  display.setTextSize(1);      // 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(0, 0);     // Start at top-left corner
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
+
+  // Display idle text
+  int i = 0;
+  while (idleText[i] != '\n') {
+    display.write(idleText[i]);
+    i++;
+  }
+  display.write(' ');
 
   display.display();
   delay(500);
