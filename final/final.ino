@@ -23,7 +23,7 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-UltraSonicDistanceSensor distanceSensor(12, 6);  // Initialize sensor that uses digital (trig, echo)
+UltraSonicDistanceSensor distanceSensor(10, 9);  // Initialize sensor that uses digital (trig, echo)
 
 int lightSensorPin = 10;
 int sensorValue;
