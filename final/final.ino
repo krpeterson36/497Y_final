@@ -23,14 +23,16 @@
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-UltraSonicDistanceSensor distanceSensor(10, 9);  // Initialize sensor that uses digital (trig, echo)
-
-int lightSensorPin = 12;
 int sensorValue;
 int sensorMin = INT_MAX;
 int sensorMax = INT_MIN;
-float distance = 0;
 char* idleText = "No reading available\n";
+
+int lightSensorPin = 11;
+int trigPin = 10;
+int echoPin = 9;
+
+UltraSonicDistanceSensor distanceSensor(trigPin, echoPin);  // Initialize sensor that uses digital (trig, echo)
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,7 +41,8 @@ void setup() {
   // Calibrate the light sensor
   while (millis() < 5000) {
     sensorValue = analogRead(lightSensorPin);
-    // record the minimum and maximum sensor value
+    Serial.println(sensorValue);
+    // Record the minimum and maximum sensor value
     if (sensorValue < sensorMin) {
       sensorMin = sensorValue;
     }
@@ -69,33 +72,42 @@ void setup() {
 }
 
 void loop() {
-  // Check to see if fist is closed
-  while (analogRead(lightSensorPin) < ((sensorMax - sensorMin)/2)){
+  // Check to see if fist is closed by seeing how much light there is
+  sensorValue = analogRead(lightSensorPin);
+  Serial.print("LigtLevel: ")
+  Serial.println(sensorValue);
+  if (sensorValue < sensorMax/2) {
+    // If it is darker than normal, start detecting distance
     drawDistance();
+  } else {
+    // Otherwise display idle text
+    drawIdle();
   }
-  drawIdle();
 }
 
 // Display distance
 void drawDistance() {
   display.clearDisplay();
-  display.setTextSize(2);      // 3:1 pixel scale
+  display.setTextSize(2);      // 2:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);     // Start at top-left corner
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
   // Actually display the distance
-  distance = distanceSensor.measureDistanceCm();
   char str[30];
-  dtostrf(distanceSensor.measureDistanceCm(), 3, 2, str);
-  Serial.println(distance);
+  dtostrf(distanceSensor.measureDistanceCm(), 3, 2, str); // Measure the distance in centimeters, up to 2 decimal places of precision 
+  Serial.print("Distance: ")
   Serial.println(str);
+
+  // Write all the numbers to the display
   int i = 0;
   while (str[i] != '\0') {
     display.write(str[i]);
     i++;
   }
   display.write(' ');
+
+  // Write 'cm' to the display
   display.write(99);
   display.write(109);
 
